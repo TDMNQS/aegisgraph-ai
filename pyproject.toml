@@ -1,0 +1,233 @@
+[build-system]
+requires = ["setuptools>=75", "wheel>=0.45"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aegisgraph-ai"
+version = "0.1.0"
+description = "Real-time payment fraud detection with graph intelligence and privacy-preserving identity controls."
+readme = "README.md"
+requires-python = ">=3.12,<3.14"
+license = { text = "MIT" }
+authors = [
+    { name = "Numan Qureshi" },
+]
+keywords = [
+    "fraud-detection",
+    "fastapi",
+    "machine-learning",
+    "neo4j",
+    "privacy",
+    "payment-security",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Security",
+    "Typing :: Typed",
+]
+dependencies = [
+    "fastapi>=0.115,<1.0",
+    "uvicorn[standard]>=0.34,<1.0",
+    "pydantic>=2.10,<3.0",
+    "pydantic-settings>=2.7,<3.0",
+    "sqlalchemy[asyncio]>=2.0.36,<3.0",
+    "asyncpg>=0.30,<1.0",
+    "alembic>=1.14,<2.0",
+    "redis[hiredis]>=5.2,<7.0",
+    "aiokafka>=0.12,<1.0",
+    "neo4j>=5.27,<7.0",
+    "pyjwt[crypto]>=2.10,<3.0",
+    "pwdlib[argon2]>=0.2,<1.0",
+    "cryptography>=44,<47",
+    "python-multipart>=0.0.20,<1.0",
+    "email-validator>=2.2,<3.0",
+    "httpx>=0.28,<1.0",
+    "orjson>=3.10,<4.0",
+    "structlog>=24.4,<27.0",
+    "prometheus-client>=0.21,<1.0",
+    "tenacity>=9.0,<10.0",
+]
+
+[project.optional-dependencies]
+ml = [
+    "joblib>=1.4,<2.0",
+    "numpy>=2.1,<3.0",
+    "pandas>=2.2,<4.0",
+    "scikit-learn>=1.6,<2.0",
+    "shap>=0.46,<1.0",
+    "xgboost>=2.1,<4.0",
+]
+dev = [
+    "bandit[toml]>=1.8,<2.0",
+    "mypy>=1.14,<2.0",
+    "pip-audit>=2.7,<3.0",
+    "pre-commit>=4.0,<5.0",
+    "pytest>=8.3,<10.0",
+    "pytest-asyncio>=0.25,<2.0",
+    "pytest-cov>=6.0,<8.0",
+    "pytest-mock>=3.14,<4.0",
+    "ruff>=0.9,<1.0",
+]
+load-test = [
+    "locust>=2.32,<3.0",
+]
+
+[project.urls]
+Repository = "https://github.com/TDMNQS/aegisgraph-ai"
+Issues = "https://github.com/TDMNQS/aegisgraph-ai/issues"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["app*", "ml*"]
+namespaces = true
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--strict-config",
+    "--strict-markers",
+    "--disable-warnings",
+    "--cov=app",
+    "--cov-report=term-missing:skip-covered",
+    "--cov-report=xml",
+    "--cov-fail-under=85",
+]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+markers = [
+    "integration: tests that require infrastructure services",
+    "security: tests mapped to threat-model controls",
+    "slow: long-running tests excluded from the default CI job",
+]
+filterwarnings = [
+    "error",
+    "ignore::DeprecationWarning:passlib.*",
+]
+
+[tool.coverage.run]
+branch = true
+parallel = true
+source = ["app"]
+omit = [
+    "app/**/__init__.py",
+    "tests/*",
+]
+
+[tool.coverage.report]
+precision = 2
+show_missing = true
+skip_covered = true
+exclude_also = [
+    "if TYPE_CHECKING:",
+    "if __name__ == .__main__.:",
+    "raise NotImplementedError",
+    "@(abc\\.)?abstractmethod",
+]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+extend-exclude = [
+    ".git",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".ruff_cache",
+    ".venv",
+    "artifacts",
+    "frontend",
+]
+
+[tool.ruff.lint]
+select = [
+    "A",
+    "ASYNC",
+    "B",
+    "C4",
+    "DTZ",
+    "E",
+    "F",
+    "FAST",
+    "I",
+    "N",
+    "PERF",
+    "PIE",
+    "PL",
+    "PTH",
+    "RUF",
+    "S",
+    "SIM",
+    "T20",
+    "TRY",
+    "UP",
+]
+ignore = [
+    "B008",
+    "PLR0913",
+    "S101",
+    "TRY003",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = [
+    "S101",
+    "PLR2004",
+]
+"ml/**/*.py" = [
+    "T201",
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app", "ml"]
+combine-as-imports = true
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"
+docstring-code-format = true
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+pretty = true
+show_error_codes = true
+show_column_numbers = true
+warn_unreachable = true
+warn_unused_configs = true
+plugins = ["pydantic.mypy"]
+exclude = [
+    "^frontend/",
+    "^artifacts/",
+]
+
+[[tool.mypy.overrides]]
+module = [
+    "aiokafka.*",
+    "joblib.*",
+    "locust.*",
+    "shap.*",
+    "xgboost.*",
+]
+ignore_missing_imports = true
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
+
+[tool.bandit]
+exclude_dirs = ["tests", ".venv", "frontend"]
+skips = ["B101"]
+
+[tool.bandit.assert_used]
+skips = ["**/test_*.py"]
