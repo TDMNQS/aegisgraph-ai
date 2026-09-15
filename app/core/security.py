@@ -16,7 +16,7 @@ from collections.abc import Mapping
 from datetime import UTC, datetime, timedelta
 from enum import StrEnum
 from types import MappingProxyType
-from typing import Any
+from typing import Any, Literal
 
 import jwt
 from jwt import (
@@ -150,7 +150,7 @@ class TokenPair(BaseModel):
 
     access_token: str
     refresh_token: str
-    token_type: str = "bearer"
+    token_type: Literal["bearer"] = Field(default="bearer")
     expires_in: int = Field(gt=0)
 
 
@@ -166,6 +166,9 @@ class PasswordVerification(BaseModel):
 _PASSWORD_HASH = PasswordHash.recommended()
 _SUPPORTED_JWT_ALGORITHMS = frozenset({"HS256", "HS384", "HS512"})
 _SYMBOL_PATTERN = re.compile(r"[^A-Za-z0-9]")
+_MIN_IDENTITY_FRAGMENT_LENGTH = 3
+_MIN_OPAQUE_TOKEN_BYTES = 16
+_MAX_OPAQUE_TOKEN_BYTES = 128
 
 
 def validate_password_policy(
@@ -200,7 +203,10 @@ def validate_password_policy(
     normalized_password = password.casefold()
     for fragment in identity_fragments:
         normalized_fragment = fragment.strip().casefold()
-        if len(normalized_fragment) >= 3 and normalized_fragment in normalized_password:
+        if (
+            len(normalized_fragment) >= _MIN_IDENTITY_FRAGMENT_LENGTH
+            and normalized_fragment in normalized_password
+        ):
             violations.append("password must not contain account identity information")
             break
 
@@ -397,7 +403,7 @@ def tokens_match(candidate_token: str, expected_digest: str) -> bool:
 def generate_opaque_token(byte_length: int = 32) -> str:
     """Generate a cryptographically secure token for CSRF or one-time actions."""
 
-    if byte_length < 16 or byte_length > 128:
+    if not _MIN_OPAQUE_TOKEN_BYTES <= byte_length <= _MAX_OPAQUE_TOKEN_BYTES:
         raise ValueError("byte_length must be between 16 and 128")
     return secrets.token_urlsafe(byte_length)
 
@@ -419,16 +425,16 @@ def _encode_token(
     _validate_jwt_algorithm(settings.jwt_algorithm)
 
     claims = TokenClaims(
-        sub=subject,
-        type=token_type,
+        subject=subject,
+        token_type=token_type,
         role=role,
         tenant_id=tenant_id,
-        iat=issued_at,
-        nbf=issued_at,
-        exp=expires_at,
-        jti=secrets.token_urlsafe(24),
-        iss=settings.jwt_issuer,
-        aud=settings.jwt_audience,
+        issued_at=issued_at,
+        not_before=issued_at,
+        expires_at=expires_at,
+        jwt_id=secrets.token_urlsafe(24),
+        issuer=settings.jwt_issuer,
+        audience=settings.jwt_audience,
     )
     payload = claims.model_dump(mode="python", by_alias=True)
     return jwt.encode(
