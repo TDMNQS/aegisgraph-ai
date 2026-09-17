@@ -91,7 +91,7 @@ Weights will be configurable and later calibrated using evaluation data. A decis
 - Automated unit, integration, security, and load tests.
 - Reproducible local environment using Docker Compose.
 
-## 40-Day Build Outcome
+## 20-Day Build Outcome
 
 By Day 40, the repository will contain a working full-stack prototype with simulated streaming data, hybrid fraud scoring, graph investigations, privacy controls, evaluation reports, automated tests, observability, documentation, and a deployment-ready container setup.
 
