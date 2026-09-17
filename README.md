@@ -99,7 +99,7 @@ By Day 40, the repository will contain a working full-stack prototype with simul
 
 One planned file is added each day. Every commit must contain a meaningful project artifact—source code, configuration, test, migration, or technical documentation. Empty or artificial files are not part of this challenge.
 
-## Day 1
+## Day 4
 
 - Defined the problem, goals, architecture, technology stack, modules, scoring strategy, engineering targets, and final deliverable.
 
