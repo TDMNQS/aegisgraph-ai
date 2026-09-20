@@ -2,13 +2,12 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from enum import StrEnum
-from typing import Mapping
 
 from app.core.config import Settings
 from app.models.transaction import PaymentDecision
-
 
 _WEIGHT_TOLERANCE = 1e-9
 
@@ -149,7 +148,7 @@ class RiskAggregator:
                 risk_score=1.0,
                 confidence=0.0,
                 component_scores=scores,
-                reason_codes=reason_codes + ("SCORING_UNAVAILABLE",),
+                reason_codes=(*reason_codes, "SCORING_UNAVAILABLE"),
                 degraded_components=degraded,
                 versions=versions,
                 total_latency_ms=total_latency,
@@ -160,11 +159,13 @@ class RiskAggregator:
             item.score * self._policy.weights[name] for name, item in available.items()
         )
         weighted_confidence = sum(
-            item.confidence * self._policy.weights[name]
-            for name, item in available.items()
+            item.confidence * self._policy.weights[name] for name, item in available.items()
         )
         risk_score = weighted_score / available_weight
-        confidence = weighted_confidence
+        # Confidence, like risk, is conditional on the components that were
+        # actually available. Without normalization a healthy rules-only local
+        # deployment would always fall below the minimum-confidence threshold.
+        confidence = weighted_confidence / available_weight
         if degraded:
             risk_score = min(risk_score, self._policy.degraded_score_cap)
 

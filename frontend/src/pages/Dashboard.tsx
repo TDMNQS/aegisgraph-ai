@@ -42,6 +42,7 @@ export function Dashboard() {
   const [filter, setFilter] = useState<QueueFilter>("active");
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [simulating, setSimulating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
 
@@ -66,6 +67,19 @@ export function Dashboard() {
 
   useEffect(() => {
     void load();
+  }, [load]);
+
+  const simulateFraud = useCallback(async () => {
+    setSimulating(true);
+    setError(null);
+    try {
+      await api.simulateFraud("account_takeover");
+      await load(true);
+    } catch (caught) {
+      setError(caught instanceof ApiError ? caught.message : "Unable to run fraud simulation");
+    } finally {
+      setSimulating(false);
+    }
   }, [load]);
 
   const metrics = useMemo(() => {
@@ -102,6 +116,9 @@ export function Dashboard() {
         </div>
         <div className="heading-actions">
           {updatedAt && <small>Updated {updatedAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</small>}
+          <button className="button" disabled={simulating} onClick={() => void simulateFraud()}>
+            {simulating ? "Scoring payment…" : "Simulate fraud"}
+          </button>
           <button className="button button--secondary" disabled={refreshing} onClick={() => void load(true)}>
             {refreshing ? "Refreshing…" : "Refresh data"}
           </button>

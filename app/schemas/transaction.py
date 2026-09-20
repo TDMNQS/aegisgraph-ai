@@ -5,18 +5,36 @@ from __future__ import annotations
 import re
 from datetime import UTC, datetime
 from decimal import Decimal
-from typing import Any, Annotated, Literal, Self
+from enum import StrEnum
+from typing import Annotated, Any, Literal, Self
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from app.models.transaction import PaymentDecision, PaymentStatus
 
-
 Token = Annotated[str, Field(min_length=16, max_length=128, pattern=r"^[A-Za-z0-9:_-]+$")]
 Score = Annotated[float, Field(ge=0.0, le=1.0)]
 _ISO_CURRENCY = re.compile(r"^[A-Z]{3}$")
 _COUNTRY_CODE = re.compile(r"^[A-Z]{2}$")
+_MAX_ATTRIBUTES = 32
+_MAX_ATTRIBUTE_KEY_LENGTH = 64
+
+
+class FraudDemoScenario(StrEnum):
+    """Server-controlled synthetic scenarios safe for local demonstrations."""
+
+    NORMAL = "normal"
+    ACCOUNT_TAKEOVER = "account_takeover"
+    FRAUD_RING = "fraud_ring"
+
+
+class FraudDemoRequest(BaseModel):
+    """Select a synthetic scenario; no real customer data is accepted."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    scenario: FraudDemoScenario = FraudDemoScenario.ACCOUNT_TAKEOVER
 
 
 class LocationInput(BaseModel):
@@ -93,9 +111,9 @@ class TransactionCreate(BaseModel):
         cls,
         value: dict[str, str | int | float | bool],
     ) -> dict[str, str | int | float | bool]:
-        if len(value) > 32:
+        if len(value) > _MAX_ATTRIBUTES:
             raise ValueError("attributes cannot contain more than 32 entries")
-        if any(len(key) > 64 for key in value):
+        if any(len(key) > _MAX_ATTRIBUTE_KEY_LENGTH for key in value):
             raise ValueError("attribute keys cannot exceed 64 characters")
         return value
 

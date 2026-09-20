@@ -161,6 +161,15 @@ export const api = {
     return request<Transaction[]>(`/transactions?limit=${limit}`);
   },
 
+  simulateFraud(
+    scenario: "normal" | "account_takeover" | "fraud_ring" = "account_takeover",
+  ): Promise<Transaction> {
+    return request<Transaction>("/transactions/demo", {
+      method: "POST",
+      body: JSON.stringify({ scenario }),
+    });
+  },
+
   getAlerts(status?: AlertStatus, limit = 100): Promise<Alert[]> {
     const params = new URLSearchParams({ limit: String(limit) });
     if (status) params.set("alert_status", status);

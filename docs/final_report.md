@@ -102,6 +102,8 @@ Alembic migration `0001_initial` creates the user, transaction, and alert schema
 
 The local stack contains PostgreSQL, Redis, single-node Kafka in KRaft mode, Neo4j, the FastAPI service, the built React console, and Prometheus. Initialization jobs create Kafka topics and Neo4j constraints before dependent services become ready.
 
+For a reproducible local demonstration, API ingestion performs transactional synchronous scoring: relational velocity features are collected, deterministic rules and identity signals are aggregated, the transaction decision is persisted, and a review/block decision creates an alert in the same database transaction. The Kafka components remain available for the production-oriented asynchronous evolution of this path.
+
 ### Local start
 
 Prerequisites: Docker Desktop with Compose v2 and at least 6 GB of available memory.
@@ -166,8 +168,8 @@ The acceptance target for a development laptop is no HTTP failures after warm-up
 1. Start the Compose stack and confirm `/health/ready` and `/metrics`.
 2. Register the first account for a new tenant; it becomes tenant administrator.
 3. Sign in through the analyst console.
-4. Submit tokenized transactions through the API, repeating one idempotency key to show deduplication.
-5. Review the dashboard risk distribution and alert queue.
+4. Select **Simulate fraud** to create a synthetic account-takeover payment with no real customer data.
+5. Verify that the dashboard immediately shows an 80% review decision and a high-severity alert.
 6. Open an investigation, inspect component scores and reason codes, then update workflow status.
 7. Inspect Neo4j relationships and Prometheus request metrics.
 8. Run unit tests and show the GitHub Actions workflow definition.
@@ -188,9 +190,8 @@ These boundaries are documented to avoid overstating the prototype's readiness.
 
 ## 11. Future Work
 
-Priority extensions are temporal graph features, a Kafka scoring worker with transactional outbox semantics, feature-store versioning, champion/challenger models, model and data drift alerts, analyst-label quality controls, OpenTelemetry traces, immutable audit anchoring, Kubernetes deployment, and a formal privacy impact assessment.
+Priority extensions are temporal graph features, migration of the demonstrated synchronous scoring path to a Kafka worker with transactional outbox semantics, feature-store versioning, champion/challenger models, model and data drift alerts, analyst-label quality controls, OpenTelemetry traces, immutable audit anchoring, Kubernetes deployment, and a formal privacy impact assessment.
 
 ## 12. Conclusion
 
 AegisGraph AI demonstrates that fraud detection can be engineered as an explainable, defense-in-depth platform rather than a single prediction endpoint. The final system connects secure APIs, relational guarantees, streaming infrastructure, reproducible ML, graph relationships, privacy controls, analyst workflows, observability, and automated delivery checks. Its documented limitations provide a clear path from final-year prototype to a governed production pilot.
-

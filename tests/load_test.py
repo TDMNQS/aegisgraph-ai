@@ -85,7 +85,7 @@ class FraudApiUser(HttpUser):
             name="POST /api/v1/transactions",
             catch_response=True,
         ) as response:
-            if response.status_code not in {200, 202}:
+            if response.status_code not in {200, 201}:
                 response.failure(f"unexpected status {response.status_code}")
 
     @task(2)

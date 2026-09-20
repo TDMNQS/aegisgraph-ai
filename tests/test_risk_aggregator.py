@@ -10,6 +10,8 @@ from app.services.risk_aggregator import (
     RiskPolicy,
 )
 
+DEGRADED_SCORE_CAP = 0.8
+
 
 def all_components(score: float, confidence: float = 1.0) -> dict[ComponentName, ComponentScore]:
     return {
@@ -56,7 +58,7 @@ def test_missing_component_is_reported_and_available_weights_are_normalized() ->
     result = RiskAggregator(RiskPolicy()).aggregate(components)
 
     assert result.risk_score == pytest.approx(0.8)
-    assert result.confidence == pytest.approx(0.75)
+    assert result.confidence == pytest.approx(1.0)
     assert result.degraded_components == (ComponentName.GRAPH,)
     assert result.decision is PaymentDecision.REVIEW
 
@@ -66,10 +68,22 @@ def test_degraded_score_is_capped_to_prevent_unsupported_auto_block() -> None:
         ComponentName.RULES: ComponentScore(score=1.0, confidence=1.0),
     }
 
-    result = RiskAggregator(RiskPolicy(degraded_score_cap=0.8)).aggregate(components)
+    result = RiskAggregator(RiskPolicy(degraded_score_cap=DEGRADED_SCORE_CAP)).aggregate(components)
 
-    assert result.risk_score == 0.8
+    assert result.risk_score == DEGRADED_SCORE_CAP
     assert result.decision is PaymentDecision.REVIEW
+
+
+def test_degraded_confidence_is_normalized_over_available_weights() -> None:
+    components = {
+        ComponentName.RULES: ComponentScore(score=0.1, confidence=0.9),
+        ComponentName.IDENTITY: ComponentScore(score=0.0, confidence=0.9),
+    }
+
+    result = RiskAggregator(RiskPolicy()).aggregate(components)
+
+    assert result.confidence == pytest.approx(0.9)
+    assert result.decision is PaymentDecision.ALLOW
 
 
 def test_fail_closed_policy_returns_error_when_component_is_missing() -> None:
