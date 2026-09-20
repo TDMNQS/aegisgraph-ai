@@ -1,0 +1,70 @@
+name: AegisGraph CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend quality and tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+      - name: Install backend and test dependencies
+        run: python -m pip install --upgrade pip && python -m pip install -e ".[ml,dev]"
+      - name: Check formatting
+        run: ruff format --check app ml tests migrations
+      - name: Lint
+        run: ruff check app ml tests migrations
+      - name: Validate Python syntax
+        run: python -m compileall -q app ml tests migrations
+      - name: Run focused test suite
+        env:
+          ENFORCE_SECURE_CONFIGURATION: "false"
+        run: python -m pytest -o addopts="" -q
+      - name: Audit application code
+        run: bandit -q -r app ml -c pyproject.toml
+
+  frontend:
+    name: Frontend typecheck and build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run build
+
+  containers:
+    name: Container configuration
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate Compose model
+        run: docker compose config --quiet
+      - name: Build application images
+        run: docker compose build api frontend
+

@@ -16,6 +16,7 @@ from app.api.deps import close_redis_client
 from app.api.routes import alerts, auth, transactions
 from app.core.config import Settings, get_settings
 from app.db.base import database_healthcheck, dispose_database
+from app.observability import metrics_response, observe_request
 
 
 @asynccontextmanager
@@ -59,7 +60,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         correlation_id = request.headers.get("X-Correlation-ID") or str(uuid4())
         started = time.perf_counter()
         request.state.correlation_id = correlation_id
-        response = await call_next(request)
+        response = await observe_request(request, call_next)
         response.headers["X-Correlation-ID"] = correlation_id
         response.headers["X-Process-Time-Ms"] = f"{(time.perf_counter() - started) * 1000:.2f}"
         response.headers["X-Content-Type-Options"] = "nosniff"
@@ -84,6 +85,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             },
         )
 
+    app.add_api_route(
+        config.metrics_path,
+        metrics_response,
+        methods=["GET"],
+        include_in_schema=False,
+    )
     app.include_router(auth.router, prefix=config.api_v1_prefix)
     app.include_router(transactions.router, prefix=config.api_v1_prefix)
     app.include_router(alerts.router, prefix=config.api_v1_prefix)
