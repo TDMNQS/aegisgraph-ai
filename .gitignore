@@ -1,0 +1,17 @@
+﻿.env
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+coverage.xml
+*.tsbuildinfo
+node_modules/
+dist/
+artifacts/
+data/*.csv
+data/*.parquet
+*.zip
