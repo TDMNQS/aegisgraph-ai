@@ -4,7 +4,7 @@
 
 AegisGraph AI is an enterprise-style platform that detects suspicious digital-payment activity in real time, discovers coordinated fraud rings, explains every risk decision, and protects user identity through tokenization and controlled access.
 
-## The Problem
+## The Problem 
 
 Traditional rule-based fraud systems struggle with new attack patterns, coordinated accounts, false positives, and fragmented identity data. AegisGraph AI combines streaming rules, machine-learning anomaly detection, graph analysis, and privacy controls in one auditable platform.
 
